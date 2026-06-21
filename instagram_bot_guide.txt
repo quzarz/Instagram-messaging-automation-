@@ -1,0 +1,94 @@
+INSTAGRAM COMMENT-TO-DM BOT: QUICK SETUP GUIDE
+
+===============================================================================
+1. WHAT YOU NEED (AT A GLANCE)
+===============================================================================
+To make this bot work, you must have or set up the following:
+
+1. Python 3 installed on your computer.
+2. Flask and Requests libraries.
+   Install them by running this command in your terminal:
+   pip install flask requests
+3. An Instagram Professional Account.
+   Switch your personal Instagram account to either a Business or Creator 
+   account inside the Instagram mobile app settings.
+4. A Facebook Page linked directly to your Instagram account.
+5. A Meta Developer Account (Free to create at https://developers.facebook.com/).
+6. ngrok (A free tool downloaded to your computer that lets Meta's servers 
+   talk to the code running on your local machine during testing).
+
+===============================================================================
+2. THE 4 KEYS YOU NEED TO COLLECT
+===============================================================================
+You must grab these 4 pieces of information before starting the bot:
+
+* META_APP_SECRET: 
+  Found in your Meta Developer Dashboard under App Settings > Basic.
+* META_ACCESS_TOKEN: 
+  Generated using the Meta Graph API Explorer tool. Make sure to choose your 
+  Page Access Token and select the 'instagram_manage_comments' and 
+  'instagram_manage_messages' permissions.
+* META_VERIFY_TOKEN: 
+  Any secret password string you invent yourself (e.g., MySecret123). You will 
+  type this into your environment setup and also paste it into Meta's webhooks.
+* TRIGGER_KEYWORD & DM_MESSAGE: 
+  The specific word you want to watch for (like "info") and the exact text 
+  message you want the bot to automatically send to the user's inbox.
+
+===============================================================================
+3. HOW TO RUN IT (QUICK START)
+===============================================================================
+1. Save your code file exactly as: instagram_dm_bot.py
+2. Open your terminal or command prompt and set your environment keys:
+
+   For Linux / macOS:
+   export META_APP_SECRET="your_secret_here"
+   export META_ACCESS_TOKEN="your_token_here"
+   export META_VERIFY_TOKEN="your_verify_phrase_here"
+   export TRIGGER_KEYWORD="info"
+   export DM_MESSAGE="Thanks for your interest! Here is your info..."
+
+   For Windows (Command Prompt):
+   set META_APP_SECRET=your_secret_here
+   set META_ACCESS_TOKEN=your_token_here
+   set META_VERIFY_TOKEN=your_verify_phrase_here
+   set TRIGGER_KEYWORD=info
+   set DM_MESSAGE=Thanks for your interest! Here is your info...
+
+3. Run the script: 
+   python instagram_dm_bot.py
+
+4. Open a second terminal window and start your local network tunnel:
+   ngrok http 5000
+
+5. Copy the secure "https://..." link ngrok displays. Go to your Meta Developer 
+   Dashboard Webhooks section, paste that link followed by "/webhook" (e.g., 
+   https://xyz.ngrok-free.app/webhook), type in your META_VERIFY_TOKEN, and 
+   subscribe to the "comments" field.
+
+===============================================================================
+4. THE TECHNICAL STUFF (HOW IT WORKS BEHIND THE SCENES)
+===============================================================================
+* The Webhook Handshake (GET /webhook): 
+  When you first connect your bot to Meta, Meta sends a quick verification 
+  string to your bot. The bot checks if the incoming 'hub.verify_token' matches 
+  your local META_VERIFY_TOKEN. If it does, it replies with the challenge code 
+  to prove your server is alive and authorized.
+
+* Security Verification (X-Hub-Signature-256): 
+  Every time someone comments, Meta sends data to your bot. To ensure a hacker 
+  isn't sending fake data, Meta signs the payload using your APP_SECRET. Your 
+  code uses HMAC SHA-256 cryptography to recalculate this signature on the fly 
+  and verifies it matches perfectly before doing any processing.
+
+* The Filtering Loop: 
+  The code loops inside the incoming JSON payload sent by Meta, ignores 
+  anything that isn't a post comment, converts the comment text to lowercase, 
+  and checks if your TRIGGER_KEYWORD string exists anywhere inside it.
+
+* The API Request: 
+  If a keyword match is found, the script uses Python's 'requests' library to 
+  fire a secure HTTP POST request to Meta's Graph API endpoint:
+  https://graph.facebook.com/v19.0/me/messages
+  It passes your ACCESS_TOKEN in the parameters and tells Meta to deliver your 
+  custom text message straight to the commenter's unique Instagram ID.
